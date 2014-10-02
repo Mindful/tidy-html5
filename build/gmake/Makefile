@@ -85,19 +85,15 @@ DOCDIR = ${TOPDIR}/htmldoc
 # For optimised builds, flags such as "-O2" should be added and -D_DEBUG=1
 # disabled.
 CC= gcc
-CFLAGS= -g -pedantic -Wall -I $(INCDIR)
+CFLAGS= -g -pedantic -Wall -fPIC -I $(INCDIR)
 # flags only supported with gcc 3.x
 CFLAGS += -Wunused-parameter
 
 OTHERCFLAGS=
 OTHERCFLAGS+= -D_DEBUG=1 -D_MSC_VER=1400
 # OTHERCFLAGS+= -fvisibility=hidden -DTIDY_EXPORT='__attribute__((visibility("default")))'
-ifdef SUPPORT_UTF16_ENCODINGS
-CFLAGS += -DSUPPORT_UTF16_ENCODINGS=$(SUPPORT_UTF16_ENCODINGS)
-endif
-ifdef SUPPORT_ASIAN_ENCODINGS
-CFLAGS += -DSUPPORT_ASIAN_ENCODINGS=$(SUPPORT_ASIAN_ENCODINGS)
-endif
+CFLAGS += -DSUPPORT_UTF16_ENCODINGS=ON
+CFLAGS += -DSUPPORT_ASIAN_ENCODINGS=ON
 ifdef SUPPORT_ACCESSIBILITY_CHECKS
 CFLAGS += -DSUPPORT_ACCESSIBILITY_CHECKS=$(SUPPORT_ACCESSIBILITY_CHECKS)
 endif
