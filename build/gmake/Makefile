@@ -92,8 +92,9 @@ CFLAGS += -Wunused-parameter
 OTHERCFLAGS=
 OTHERCFLAGS+= -D_DEBUG=1 -D_MSC_VER=1400
 # OTHERCFLAGS+= -fvisibility=hidden -DTIDY_EXPORT='__attribute__((visibility("default")))'
-CFLAGS += -DSUPPORT_UTF16_ENCODINGS=ON
-CFLAGS += -DSUPPORT_ASIAN_ENCODINGS=ON
+#Must be undefined, 1 or 0; bad definitions (such as "ON") cause serious problems
+CFLAGS += -DSUPPORT_UTF16_ENCODINGS=1 #Unicode
+CFLAGS += -DSUPPORT_ASIAN_ENCODINGS=1 #We probably don't need support for Big5 or ShiftJIS docs, but why not?
 ifdef SUPPORT_ACCESSIBILITY_CHECKS
 CFLAGS += -DSUPPORT_ACCESSIBILITY_CHECKS=$(SUPPORT_ACCESSIBILITY_CHECKS)
 endif
