@@ -3,7 +3,7 @@
   Copyright University of Toronto
   Portions (c) 1998-2009 (W3C) MIT, ERCIM, Keio University
   See tidy.h for the copyright notice.
-
+  
 */
 
 /*********************************************************************
@@ -1570,6 +1570,7 @@ static void CheckMultiHeaders( TidyDocImpl* doc, Node* node )
             {
                 if ( nodeIsTR(TNode) )
                 {
+                    flag = 0; /* Issue #168 - access test 5-2-1-2 */
                     if (TNode->content != NULL)
                     {
                         temp = TNode->content;

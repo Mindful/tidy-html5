@@ -1,44 +1,124 @@
-<!doctype html>
-<head>
-  <meta charset=utf8>
-  <title>About tidy-html5</title>
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="UTF-8">
+  <title>
+  HTML Tidy with HTML5 support
+  </title>
   <style>
-  li span.note { display: block; }
+  h1 {
+    background-color: #6495ed;
+  }
+  code {
+    background-color: #e0ffff;
+  }
+  div {
+    background-color: #b0c4de;
+  }
   </style>
-</head>
-
-<h1>HTML Tidy for HTML5 (experimental)</h1>
-<p>This repo is an experimental fork of the code from
- <a href="http://tidy.sourceforge.net">tidy.sourceforge.net</a>.
-This source code in this version supports processing of HTML5 documents.
-The changes for HTML5 support started from a
- <a href="http://lists.w3.org/Archives/Public/www-archive/2011Nov/0007.html">patch developed by Björn Höhrmann</a>.</p>
-
-<p>For more information, see
- <a href="http://w3c.github.com/tidy-html5/">w3c.github.com/tidy-html5</a>
-
-<h2>Building the tidy command-line tool</h2>
-<p>For Linux/BSD/OSX platforms, you can build and install the
-<code>tidy</code> command-line tool from the source code using the
-following steps.</p>
-
-<ol>
-<li><code>make -C build/gmake/</code></li>
-<li><code>make install -C build/gmake/</code></li>
-</ol>
-
-<p>Note that you will either need to run <code>make install</code> as root,
-or with <code>sudo make install</code>.</p>
-
-<h2>Building the libtidy shared library</h2>
-<p>For Linux/BSD/OSX platforms, you can build and install the
-<code>tidylib</code> shared library (for use in building other
-applications) from the source code using the following steps.</p>
-
-<ol>
-<li>sh build/gnuauto/setup.sh && ./configure && make</li>
-<li>make install</li>
-</ol>
-
-<p>Note that you will either need to run <code>make install</code> as root,
-or with <code>sudo make install</code>.</p>
+ </head>
+ <body>
+  <h1>
+   HTML Tidy with HTML5 support
+  </h1>
+  <h2>
+   Prerequisites
+  </h2>
+  <ol>
+   <li>
+    <p>
+     git - http://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+    </p>
+   </li>
+   <li>
+    <p>
+     cmake - http://www.cmake.org/download/
+    </p>
+   </li>
+   <li>
+    <p>
+     appropriate build tools for the platform
+    </p>
+   </li>
+  </ol>
+  <p>
+   CMake comes in two forms - command line and gui. Some installations only install one or the
+   other, but sometimes both. The build commands below are only for the command line use.
+  </p>
+  <p>
+   Also the actual build tools vary for each platform. But that is one of the great features of
+   cmake, it can generate variuous 'native' build files. Running cmake without any parameters will
+   list the generators available on that platform. For sure one of the common ones is "Unix
+   Makefiles", which needs autotools make installed, but many other generators are supported.
+  </p>
+  <p>
+   In windows cmake offers various versions of MSVC. Again below only the command line use of MSVC
+   is shown, but the tidy solution (*.sln) file can be loaded into the MSVC IDE, and the building
+   done in there.
+  </p>
+  <h2>
+   Build the tidy library and command line tool
+  </h2>
+  <ol>
+   <li>
+    <p>
+     <code>cd build/cmake</code>
+    </p>
+   </li>
+   <li>
+    <p>
+     <code>cmake ../.. [-DCMAKE_INSTALL_PREFIX=/path/for/install]</code>
+    </p>
+   </li>
+   <li>
+    <p>
+     Windows: <code>cmake --build . --config Release</code>
+     <br>
+     Unix/OS X: <code>make</code>
+    </p>
+   </li>
+   <li>
+    <p>
+     Install, if desired:
+     <br>
+     Windows: <code>cmake --build . --config Release --target INSTALL</code>
+     <br>
+     Unix/OS X: <code>[sudo] make install</code>
+    </p>
+   </li>
+  </ol>
+  <p>
+   By default cmake sets the install path to /usr/local in unix. If you wanted the binary in say
+   /usr/bin instead, then in 2. above use -DCMAKE<em>INSTALL</em>PREFIX=/usr
+  </p>
+  <p>
+   In windows the default install is to C:\Program Files\tidy5, or C:/Program Files (x86)/tidy5,
+   which is not very useful. After the build the tidy[n].exe is in the Release directory, and can
+   be copied to any directory in your PATH environment variable, for global use.
+  </p>
+  <p>
+   If you need the tidy library built as a 'shared' (DLL) library, then in 2. add the command
+   -DBUILD<em>SHARED</em>LIB:BOOL=ON. This option is OFF by default, so the static library is
+   built and linked with the command line tool for convenience.
+  </p>
+  <h2>
+   History
+  </h2>
+  <p>
+   This repository should be considered canonical for HTML Tidy as of 2015-January-15.
+  </p>
+  <ul>
+   <li>
+    <p>
+     This repository originally transferred from <a href=
+     "http://w3c.github.com/tidy-html5/">w3c.github.com/tidy-html5</a>.
+    </p>
+   </li>
+   <li>
+    <p>
+     First moved to Github from <a href="http://tidy.sourceforge.net">tidy.sourceforge.net</a>.
+    </p>
+   </li>
+  </ul>
+ </body>
+</html>

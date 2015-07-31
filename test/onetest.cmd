@@ -1,11 +1,11 @@
 @echo off
-
+@set TMPTEST=temptest.txt
 REM onetest.cmd - execute a single test case
 REM
 REM (c) 1998-2006 (W3C) MIT, ERCIM, Keio University
 REM See tidy.c for the copyright notice.
 REM
-REM <URL:http://tidy.sourceforge.net/>
+REM <URL:http://www.html-tidy.org/>
 REM
 
 @if "%TIDY%." == "." goto Err1
@@ -13,6 +13,8 @@ REM
 @if "%TIDYOUT%." == "." goto Err3
 @if NOT EXIST %TIDYOUT%\nul goto Err4
 @if NOT EXIST input\nul goto Err5
+@if "%1x" == "x" goto Err8
+@if "%2x" == "x" goto Err9
 
 set TESTNO=%1
 set EXPECTED=%2
@@ -40,15 +42,19 @@ if exist %TIDYFILE% del %TIDYFILE%
 
 @REM Noisy output, or quiet
 @REM echo Testing %1 input %INFILE% config %CFGFILE% ...
-echo Testing %1
+@echo Doing: '%TIDY% -f %MSGFILE% -config %CFGFILE% %3 %4 %5 %6 %7 %8 %9 --tidy-mark no -o %TIDYFILE% %INFILE% >> %TMPTEST%
 
-%TIDY% -f %MSGFILE% -config %CFGFILE% %3 %4 %5 %6 %7 %8 %9 --tidy-mark no -o %TIDYFILE% %INFILE%
-set STATUS=%ERRORLEVEL%
+@%TIDY% -f %MSGFILE% -config %CFGFILE% %3 %4 %5 %6 %7 %8 %9 --tidy-mark no -o %TIDYFILE% %INFILE%
+@set STATUS=%ERRORLEVEL%
+@echo Testing %1, expect %EXPECTED%, got %STATUS%
+@echo Testing %1, expect %EXPECTED%, got %STATUS% >> %TMPTEST%
 
-if %STATUS% EQU %EXPECTED% goto done
-set ERRTESTS=%ERRTESTS% %TESTNO%
-echo *** Failed - got %STATUS%, expected %EXPECTED% ***
-type %MSGFILE%
+@if %STATUS% EQU %EXPECTED% goto done
+@set ERRTESTS=%ERRTESTS% %TESTNO%
+@echo *** Failed - got %STATUS%, expected %EXPECTED% ***
+@type %MSGFILE%
+@echo *** Failed - got %STATUS%, expected %EXPECTED% *** >> %TMPTEST%
+@type %MSGFILE% >> %TMPTEST%
 goto done
 
 :Err1
@@ -82,8 +88,9 @@ goto done
 @goto TRYAT
 
 :TRYAT
-@echo Try running alltest.cmd ..\build\msvc\Release\Tidy.exe tmp ...
+@echo Try running alltest1.cmd ..\build\cmake\Release\Tidy5.exe tmp
 @echo ==============================================================
+@pause
 @goto done
 
 :Err6
@@ -99,5 +106,14 @@ goto done
 @echo ==============================================================
 @pause
 @goto done
+
+:Err8
+@echo.
+@echo ERROR: No input test number given!
+:Err9
+@echo ERROR: No expected exit value given!
+@echo.
+@goto done
+
 
 :done

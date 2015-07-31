@@ -1,38 +1,66 @@
-# HTML Tidy for HTML5 (experimental)
+# HTML Tidy with HTML5 support
 
-This repo is an experimental fork of the code from [tidy.sourceforge.net][1].
-This source code in this version supports processing of HTML5 documents. The
-changes for HTML5 support started from a [patch developed by Björn Höhrmann][2].
+## Prerequisites
 
-   [1]: http://tidy.sourceforge.net
+  1. git - http://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+  
+  2. cmake - http://www.cmake.org/download/
+  
+  3. appropriate build tools for the platform
+  
+CMake comes in two forms - command line and gui. Some installations only install one or the other, but sometimes both. The build commands below are only for the command line use.
 
-   [2]: http://lists.w3.org/Archives/Public/www-archive/2011Nov/0007.html
+Also the actual build tools vary for each platform. But that is one of the great features of cmake, it can generate variuous 'native' build files. Running cmake without any parameters will list the generators available on that platform. For sure one of the common ones is "Unix Makefiles", which needs autotools make installed, but many other generators are supported.
 
-For more information, see [w3c.github.com/tidy-html5][3]
+In windows cmake offers various versions of MSVC. Again below only the command line use of MSVC is shown, but the tidy solution (*.sln) file can be loaded into the MSVC IDE, and the building done in there.
 
-   [3]: http://w3c.github.com/tidy-html5/
 
-## Building the tidy command-line tool
+## Build the tidy library and command line tool
 
-For Linux/BSD/OSX platforms, you can build and install the `tidy` command-line
-tool from the source code using the following steps.
+  1. `cd build/cmake`
 
-  1. `make -C build/gmake/`
+  2. `cmake ../.. [-DCMAKE_INSTALL_PREFIX=/path/for/install]`
 
-  2. `make install -C build/gmake/`
+  3. Windows:  `cmake --build . --config Release`  
+     Unix/OS X: `make`
 
-Note that you will either need to run `make install` as root, or with `sudo make
-install`.
+  4. Install, if desired:  
+     Windows: `cmake --build . --config Release --target INSTALL`  
+     Unix/OS X: `[sudo] make install`
 
-## Building the libtidy shared library
+By default cmake sets the install path to /usr/local in unix. If you wanted the binary in say /usr/bin instead, then in 2. above use -DCMAKE_INSTALL_PREFIX=/usr
 
-For Linux/BSD/OSX platforms, you can build and install the `tidylib` shared
-library (for use in building other applications) from the source code using the
-following steps.
+Also, in unix if you want to build the release library without any debug `assert` in the code then add `-DCMAKE_BUILD_TYPE=Release` in step 2. This adds a `-DNDEBUG` macro to the compile switches. This is normally added in windows build for the `Release` config.
 
-  1. sh build/gnuauto/setup.sh && ./configure && make
+In windows the default install is to C:\Program Files\tidy5, or C:/Program Files (x86)/tidy5, which is  not very useful. After the build the tidy[n].exe is in the Release directory, and can be copied to any directory in your PATH environment variable, for global use.
 
-  2. make install
+If you do **not** need the tidy library built as a 'shared' (DLL) library, then in 2. add the command -DBUILD_SHARED_LIB:BOOL=OFF. This option is ON by default. The static library is always built and linked with the command line tool for convenience in windows, and so the binary can be run as part of the man page build without the shared library being installed in unix.
 
-Note that you will either need to run `make install` as root, or with `sudo make
-install`.
+## Prebuilt Binaries
+
+An attempt is being made to publish pre-built binaries to http://www.htacg.org/binaries - This is still a work in progress, but getting there..
+
+## Development
+
+The default branch of this repository is `master`. This is the development branch, hopefully always `stable` source.
+
+It will identify as library version X.odd.X. Use it to help us on the forever `bug` quest, addition of new features, options, ..., etc.
+
+However, if you seek **release** code, then do `git branch -r`, and choose one of the `release/X.even.0` branches for your build and install...
+
+This will always be the latest release branch. Important `bug` fixes thought relevant to this release, pushed back, may bump the library version to X.even.1, ..., etc, but will be remain known as `X.even`...
+
+## History
+
+This repository should be considered canonical for HTML Tidy as of 2015-January-15.
+
+ - This repository originally transferred from [w3c.github.com/tidy-html5][1].
+ 
+ - First moved to Github from [tidy.sourceforge.net][2].
+
+
+   [1]: http://w3c.github.com/tidy-html5/
+
+   [2]: http://tidy.sourceforge.net
+
+; eof

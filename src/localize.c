@@ -15,6 +15,9 @@
 #include "message.h"
 #include "tmbstr.h"
 #include "utf8.h"
+#if !defined(NDEBUG) && defined(_MSC_VER)
+#include "sprtf.h"
+#endif
 
 /* used to point to Web Accessibility Guidelines */
 #define ACCESS_URL  "http://www.w3.org/WAI/GL"
@@ -30,6 +33,12 @@ ctmbstr TY_(ReleaseDate)(void)
 {
   return TY_(release_date);
 }
+
+ctmbstr TIDY_CALL     tidyLibraryVersion(void)
+{
+  return TY_(library_version);
+}
+
 
 static struct _msgfmt
 {
@@ -101,6 +110,11 @@ static struct _msgfmt
   { NESTED_QUOTATION,             "nested q elements, possible typo."                                       }, /* Warning */
   { OBSOLETE_ELEMENT,             "replacing obsolete element %s by %s"                                     }, /* Warning */
   { COERCE_TO_ENDTAG_WARN,        "<%s> is probably intended as </%s>"                                      }, /* Warning */
+  /* HTML5 */
+  { REMOVED_HTML5,                "%s element removed from HTML5"                                           }, /* Warning */
+  { BAD_BODY_HTML5,               "Found attribute on body that is obsolete in HTML5. Use CSS"              }, /* Warning */
+  { BAD_ALIGN_HTML5,              "The align attribute on the %s element is obsolete, Use CSS"              }, /* Warning */
+  { BAD_SUMMARY_HTML5,            "The summary attribute on the %s element is obsolete in HTML5"            }, /* Warning */
 
 /* ReportNotice */
   { TRIM_EMPTY_ELEMENT,           "trimming empty %s"                                                       }, /* Notice */
@@ -732,7 +746,7 @@ static const TidyOptionDoc option_docs[] =
   {TidyTabSize,
    "This option specifies the number of columns that Tidy uses between "
    "successive tab stops. It is used to map tabs to spaces when reading the "
-   "input. Tidy never outputs tabs. "
+   "input. "
   },
   {TidyVertSpace,
    "This option specifies if Tidy should add some empty lines for "
@@ -891,7 +905,7 @@ static const TidyOptionDoc option_docs[] =
    "some CSS markup to avoid indentation to the right. "
   },
   {TidyPreserveEntities,
-   "This option specifies if Tidy should preserve the well-formed entitites "
+   "This option specifies if Tidy should preserve the well-formed entities "
    "as found in the input. "
   },
   {TidyAnchorAsName,
@@ -901,6 +915,14 @@ static const TidyOptionDoc option_docs[] =
    "is added along an existing id attribute if the DTD allows it. "
    "If set to \"no\", any existing name attribute is removed "
    "if an id attribute exists or has been added. "
+  },
+   {TidyPPrintTabs,
+   "Set this option \"on\" to indent using tabs instead of the default "
+   "spaces. The option TidyIndentSpaces controls the number of tabs output "
+   "per level of indent, which is reset to 1, when this option is set on. "
+   "And of course, indent must be enabled for this to have any effect. "
+   "Note TidyTabSize controls converting input tabs to spaces. Set to zero "
+   "to retain input tabs. "
   },
   {N_TIDY_OPTIONS,
    NULL
@@ -1028,11 +1050,18 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level,
 
     if ( go )
     {
+        va_list args_copy;
+        va_copy(args_copy, args);
         TY_(tmbvsnprintf)(messageBuf, sizeMessageBuf, msg, args);
         if ( doc->mssgFilt )
         {
             TidyDoc tdoc = tidyImplToDoc( doc );
             go = doc->mssgFilt( tdoc, level, line, col, messageBuf );
+        }
+        if ( doc->mssgFilt2 )
+        {
+            TidyDoc tdoc = tidyImplToDoc( doc );
+            go = go | doc->mssgFilt2( tdoc, level, line, col, msg, args_copy );
         }
     }
 
@@ -1044,17 +1073,25 @@ static void messagePos( TidyDocImpl* doc, TidyReportLevel level,
         if ( line > 0 && col > 0 )
         {
             ReportPosition(doc, line, col, buf, sizeBuf);
+#if !defined(NDEBUG) && defined(_MSC_VER)
+            SPRTF("%s",buf);
+#endif
             for ( cp = buf; *cp; ++cp )
                 TY_(WriteChar)( *cp, doc->errout );
         }
 
         LevelPrefix( level, buf, sizeBuf );
+#if !defined(NDEBUG) && defined(_MSC_VER)
+            SPRTF("%s",buf);
+            SPRTF("%s\n",messageBuf);
+#else
         for ( cp = buf; *cp; ++cp )
             TY_(WriteChar)( *cp, doc->errout );
 
         for ( cp = messageBuf; *cp; ++cp )
             TY_(WriteChar)( *cp, doc->errout );
         TY_(WriteChar)( '\n', doc->errout );
+#endif
         TidyDocFree(doc, buf);
     }
     TidyDocFree(doc, messageBuf);
@@ -1136,15 +1173,21 @@ void tidy_out( TidyDocImpl* doc, ctmbstr msg, ... )
     {
         ctmbstr cp;
         enum { sizeBuf=2048 };
-        char *buf = TidyDocAlloc(doc,sizeBuf);
+        char *buf = (char *)TidyDocAlloc(doc,sizeBuf);
 
         va_list args;
         va_start( args, msg );
         TY_(tmbvsnprintf)(buf, sizeBuf, msg, args);
         va_end( args );
 
+#if !defined(NDEBUG) && defined(_MSC_VER)
+        add_std_out(0);
+#endif
         for ( cp=buf; *cp; ++cp )
           TY_(WriteChar)( *cp, doc->errout );
+#if !defined(NDEBUG) && defined(_MSC_VER)
+        add_std_out(1);
+#endif
         TidyDocFree(doc, buf);
     }
 }
@@ -1160,7 +1203,7 @@ void ShowVersion( TidyDocImpl* doc )
 #endif
 
     tidy_out( doc, "\nHTML Tidy%s%s (release date: %s; built on %s, at %s)\n"
-                   "See http://tidy.sourceforge.net/ for details.\n",
+                   "See http://www.html-tidy.org/ for details.\n",
               helper, platform, TY_(release_date), __DATE__, __TIME__ );
 }
 #endif
@@ -1454,6 +1497,10 @@ void TY_(ReportWarning)(TidyDocImpl* doc, Node *element, Node *node, uint code)
         break;
 
     case NESTED_EMPHASIS:
+    case REMOVED_HTML5:
+    case BAD_BODY_HTML5:
+    case BAD_ALIGN_HTML5:
+    case BAD_SUMMARY_HTML5:
         messageNode(doc, TidyWarning, rpt, fmt, nodedesc);
         break;
     case COERCE_TO_ENDTAG_WARN:
@@ -1566,7 +1613,9 @@ void TY_(ReportError)(TidyDocImpl* doc, Node *element, Node *node, uint code)
         break;
 
     case DISCARDING_UNEXPECTED:
-        /* Force error if in a bad form */
+        /* Force error if in a bad form, or 
+           Issue #166 - repeated <main> element
+        */
         messageNode(doc, doc->badForm ? TidyError : TidyWarning, node, fmt, nodedesc);
         break;
 
@@ -1580,6 +1629,9 @@ void TY_(ReportError)(TidyDocImpl* doc, Node *element, Node *node, uint code)
     case REPLACING_UNEX_ELEMENT:
         TagToString(element, elemdesc, sizeof(elemdesc));
         messageNode(doc, TidyWarning, rpt, fmt, elemdesc, nodedesc);
+        break;
+    case REMOVED_HTML5:
+        messageNode(doc, TidyError, rpt, fmt, nodedesc);
         break;
     }
 }
@@ -1699,7 +1751,7 @@ void TY_(ErrorSummary)( TidyDocImpl* doc )
       }
     }
 
-    if (doc->badForm)
+    if (doc->badForm & flg_BadForm) /* Issue #166 - changed to BIT flag to support other errors */
     {
         tidy_out(doc, "You may need to move one or both of the <form> and </form>\n");
         tidy_out(doc, "tags. HTML elements should be properly nested and form elements\n");
@@ -1707,6 +1759,13 @@ void TY_(ErrorSummary)( TidyDocImpl* doc )
         tidy_out(doc, "in one table cell and the </form> in another. If the <form> is\n");
         tidy_out(doc, "placed before a table, the </form> cannot be placed inside the\n");
         tidy_out(doc, "table! Note that one form can't be nested inside another!\n\n");
+    }
+
+    if (doc->badForm & flg_BadMain) /* Issue #166 - repeated <main> element */
+    {
+        tidy_out(doc, "Only one <main> element is allowed in a document.\n");
+        tidy_out(doc, "Subsequent <main> elements have been discarded, which may\n");
+        tidy_out(doc, "render the document invalid.\n");
     }
     
     if (doc->badAccess)
@@ -1828,12 +1887,11 @@ void TY_(NeedsAuthorIntervention)( TidyDocImpl* doc )
 void TY_(GeneralInfo)( TidyDocImpl* doc )
 {
     if (!cfgBool(doc, TidyShowInfo)) return;
-    tidy_out(doc, "About this fork of Tidy: http://w3c.github.com/tidy-html5/\n");
-    tidy_out(doc, "Bug reports and comments: https://github.com/w3c/tidy-html5/issues/\n");
-    tidy_out(doc, "Or send questions and comments to html-tidy@w3.org\n");
+    tidy_out(doc, "About HTML Tidy: https://github.com/htacg/tidy-html5\n");
+    tidy_out(doc, "Bug reports and comments: https://github.com/htacg/tidy-html5/issues\n");
+    tidy_out(doc, "Or send questions and comments to: https://lists.w3.org/Archives/Public/public-htacg/\n");
     tidy_out(doc, "Latest HTML specification: http://dev.w3.org/html5/spec-author-view/\n");
-    tidy_out(doc, "HTML language reference: http://dev.w3.org/html5/markup/\n");
-    tidy_out(doc, "Validate your HTML5 documents: http://validator.w3.org/nu/\n");
+    tidy_out(doc, "Validate your HTML documents: http://validator.w3.org/nu/\n");
     tidy_out(doc, "Lobby your company to join the W3C: http://www.w3.org/Consortium\n");
 }
 
